@@ -146,6 +146,7 @@ def main_menu():
     1: Port Scanner
     2: Host Discovery Scan
     3: OS Discovery Scan
+    4: Create Report
     0: Exit Program
         ''')
 
@@ -314,6 +315,38 @@ def os_discovery(target):
     else:
         print("No results to display")
 
+# Function to create a report for scan results
+def create_report():
+    # Global Variable for scan results and scan times
+    global port_results, host_results, os_results
+    global last_port_scan, last_host_scan,last_os_scan
+
+    # Input for naming report file
+    file_name = input("Enter File Name: ")
+    # Date calculation for filename and report time
+    date = datetime.now().strftime('%Y-%m-%d')
+    # Input for report title
+    title = input("Enter Report Title: ")
+
+    formatted_ports = tabulate(port_results, headers=["Host", "Protocol", "Port", "State", "Service", "Version"], tablefmt="grid")
+    formatted_hosts = tabulate(host_results, headers=["IP", "MAC", "Hostname"], tablefmt="grid")
+    formatted_os = tabulate(os_results, headers=["IP Address", "Operating System", "Match %"], tablefmt="grid")
+
+    # Section to write results to file
+    with open(f"{file_name}-{date}.txt", "w") as report_file:
+        report_file.write(f"Report Title: {title}\n")
+        report_file.write(f"Date: {date}\n\n")
+        
+        report_file.write("\nPort Scan Results:")
+        report_file.write(f"Port Scan Completed at: {last_port_scan}\n")
+        report_file.write(formatted_ports)
+        report_file.write("\nHost Discovery Results:\n")
+        report_file.write(f"Host Scan Completed at: {last_host_scan}\n")
+        report_file.write(formatted_hosts)
+        report_file.write("\nOS Discovery Results:\n")
+        report_file.write(f"OS Scan Completed at: {last_os_scan}\n")
+        report_file.write(formatted_os)
+
 
 if __name__ == '__main__':
     while True:
@@ -339,6 +372,27 @@ if __name__ == '__main__':
             # OS Discovery Function
             target = get_ip_input("Enter target IP address(e.g.'10.10.1.1','10.10.1.1-10'or'10.10.1.0/24'): ")
             os_discovery(target)
+        elif menu_option == 4:
+            # Create Report Function
+            # Check if all results are available
+            if port_results and host_results and os_results is not None:
+                # If all results are available continue to report creation
+                create_report()
+            else:
+                while True:
+                    # If not all results are available, prompt confirmation
+                    print("Some results are not available. Would you like to continue? 0:No 1:Yes ")
+                    report_choice = get_integer_input("Select Option: ")
+                    if report_choice == 0:
+                        # Exit to main menu
+                        break
+                    elif report_choice == 1:
+                        # Proceed to report creation
+                        create_report()
+                        break
+                    else:
+                        # Error handling for invalid option input
+                        print("Invalid Option")
         else:
             # Error handling for invalid option input
             print("Invalid Option")
