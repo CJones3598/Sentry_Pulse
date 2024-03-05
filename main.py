@@ -10,6 +10,8 @@ from tabulate import tabulate
 from datetime import datetime
 # Import ipaddresss module for input validation
 import ipaddress
+# Import logging module for user interaction logging
+import logging
 
 
 # Global Variables for times and results
@@ -20,6 +22,8 @@ last_host_scan = None  # Last host scan time
 os_results = None      # OS Scan Results
 last_os_scan = None    # Last OS Scan time
 
+# Configure logging for user interaction log
+logging.basicConfig(filename='user_interaction.log', level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 ### Functions for Input Validation ###
 # Function to validate integer inputs
@@ -116,6 +120,20 @@ def get_ip_input(prompt):
         except Exception as e:
             print("Error:", e)
 
+
+# Function to log user interaction with application
+def log_interaction(user, action):
+    # Check if the action is a list or tuple
+    if isinstance(action, (list, tuple)):
+        # If list or tuple, join elements into a string
+        action_string = ' '.join(str(elem) for elem in action)
+    else:
+        # If not a list or tuple, convert it to a string
+        action_string = str(action)
+    # Logging the user interaction with the action
+    logging.info(f"{user} performed action: {action_string}")
+
+# Function to reset scan results and times
 def reset_scans():
     # Global variables for scan results and scan times
     global port_results, host_results, os_results
@@ -124,6 +142,8 @@ def reset_scans():
     port_results = host_results = os_results = None
     # Set last scan time variables to none
     last_port_scan = last_host_scan = last_os_scan = None
+    # Log the interaction with the action
+    log_interaction("SYSTEM", "Scan Results and Times Reset")
 
 # Function to check status of each of the scan types
 def scan_status():
@@ -201,6 +221,8 @@ def port_scanner(target, port_range, scan_type=1):
         last_port_scan = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # Display scan start time
         print("Scan Started at:", last_port_scan)
+        # Log the interaction with the action
+        log_interaction("USER", f"Started Port Scan. Target: {target}, Ports: {port_range}, Scan Type: {scan_type}")
 
         # Use concurrent ThreatPoolExecutor for concurrent scanning of ports
         with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
@@ -215,8 +237,14 @@ def port_scanner(target, port_range, scan_type=1):
     if port_results:
         print("Port Scanning Results:")
         print(tabulate(port_results, headers=["Host", "Protocol", "Port", "State", "Service", "Version"], tablefmt="grid"))
+        # Log the interaction with the action
+        log_interaction("USER", f"Finished Port Scan. Target: {target}, Ports: {port_range}, Scan Type: {scan_type}")
+        log_interaction("SYSTEM", f"Results Stored for Port Scan on: {target} Ports: {port_range}" )
     else:
         print("No results to display.")
+        # Log the interaction with the action
+        log_interaction("USER", f"Finished Port Scan. Target: {target}, Ports: {port_range}, Scan Type: {scan_type}")
+        log_interaction("SYSTEM", f"No Results Found for Port Scan on: {target} Ports: {port_range}" )
 
 # Function to scan for hosts on target netwrok
 def host_discovery(network):
@@ -230,6 +258,8 @@ def host_discovery(network):
         last_host_scan = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # Display scan start time
         print("Scan Started at:", last_host_scan)
+        # Log the interaction with the action
+        log_interaction("USER", f"Started Host Discovery on Network: {network}")
         # Create an instance of PortScanner from NMAP library
         scanner = nmap.PortScanner()
         # Perform the port scan with given inputs
@@ -262,8 +292,14 @@ def host_discovery(network):
         print("Hosts Discovered:")
         print(tabulate(hosts_list, headers=["IP", "MAC", "Hostname"], tablefmt="grid"))
         host_results = hosts_list
+        # Log the interaction with the action
+        log_interaction("USER", f"Finished Host Discovery on: {network}")
+        log_interaction("SYSTEM", f"Results Stored for Host Discovery on: {network}" )
     else:
         print("No hosts found.")
+        # Log the interaction with the action
+        log_interaction("USER", f"Finished Host Discovery on: {network}")
+        log_interaction("SYSTEM", f"No Results Found for Host Discovery on: {network}" )
 
 # Function to scan hosts for OS information
 def os_discovery(target):
@@ -277,6 +313,9 @@ def os_discovery(target):
         last_os_scan = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # Display scan start time
         print("Scan Started at:", last_os_scan)
+        # Log the interaction with the action
+        log_interaction("USER", f"Started OS Discovery on Target: {target}")
+
         # Create an instance of PortScanner from NMAP library
         scanner = nmap.PortScanner()
         # Perform OS discovery scan
@@ -320,8 +359,14 @@ def os_discovery(target):
     if results:
         print(tabulate(results, headers=["IP Address", "Operating System", "Match %"], tablefmt="grid"))
         os_results = results
+        # Log the interaction with the action
+        log_interaction("USER", f"Finished OS Discovery on: {target}")
+        log_interaction("SYSTEM", f"Results Stored for OS Discovery on: {target}" )
     else:
         print("No results to display")
+        # Log the interaction with the action
+        log_interaction("USER", f"Finished OS Discovery on: {target}")
+        log_interaction("SYSTEM", f"No Results Found for OS Discovery on: {target}" )
 
 # Function to create a report for scan results
 def create_report():
@@ -354,37 +399,51 @@ def create_report():
         report_file.write("\nOS Discovery Results:\n")
         report_file.write(f"OS Scan Completed at: {last_os_scan}\n")
         report_file.write(formatted_os)
+    # Log the interaction with the action
+    log_interaction("USER", f"Created Report: {file_name}-{date}.txt ")
     print(f"Report Created: {file_name}-{date}.txt")
     print("Previous Results Cleared.")
     reset_scans()
-    
 
 if __name__ == '__main__':
+    log_interaction("System", "Application Loaded")
     while True:
         # Dislay Main Menu and option input
         main_menu()
+        # Log the interaction with the action
+        log_interaction("SYSTEM", "Main Menu Loaded")
         menu_option = get_integer_input("Select an Option: ")
         if menu_option == 0:
-            # Exit the program
+            ## Exit the program ##
             print("Exiting Program. Goodbye!")
             time.sleep(2)
+            # Log the interaction with the action
+            log_interaction("SYSTEM", "Application Closed")
             exit()
         elif menu_option == 1:
-            # Port Scanner Function
+            ## Port Scanner Function ##
+            # Log the interaction with the action
+            log_interaction("USER", "Selected Port Scanner Function")
             target = input("Enter target IP address or hostname: ")
             port_range = validate_port_range()
             scan_type = get_integer_input("Select Scan Type (1: TCP SYN, 2: TCP Connect, 3: TCP ACK): ")
             port_scanner(target, port_range, scan_type)
         elif menu_option == 2:
-            # Host Discovery Function
+            ## Host Discovery Function ##
+            # Log the interaction with the action
+            log_interaction("USER", "Selected Host Discovery Function")
             network = get_network("Enter Target Network(e.g. 10.10.10.0/24): ")
             host_discovery(network)  
         elif menu_option == 3:
-            # OS Discovery Function
+            ## OS Discovery Function ##
+            # Log the interaction with the action
+            log_interaction("USER", "Selected OS Discovery Function")
             target = get_ip_input("Enter target IP address(e.g.'10.10.1.1','10.10.1.1-10'or'10.10.1.0/24'): ")
             os_discovery(target)
         elif menu_option == 4:
-            # Create Report Function
+            ## Create Report Function ##
+            # Log the interaction with the action
+            log_interaction("USER", "Selected Report Creation Function")
             # Check if all results are available
             if port_results and host_results and os_results is not None:
                 # If all results are available continue to report creation
