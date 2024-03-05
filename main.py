@@ -117,9 +117,21 @@ def get_ip_input(prompt):
             print("Error:", e)
 
 
+# Function to check status of each of the scan types
+def scan_status():
+    # Check each of the global variables for values, return status
+    port_status = last_port_scan if 'last_port_scan' in globals() and last_port_scan is not None else "Not Completed"
+    host_status = last_host_scan if 'last_host_scan' in globals() and last_host_scan is not None else "Not Completed"
+    os_status = last_os_scan if 'last_os_scan' in globals() and last_os_scan is not None else "Not Completed"
+    port_result_status = "Available" if 'port_results' in globals() and port_results is not None else "Not Available"
+    host_result_status = "Available" if 'host_results' in globals() and host_results is not None else "Not Available"
+    os_results_status = "Available" if 'os_results' in globals() and os_results is not None else "Not Available"
+    # Display Status of each scan
+    print(f"Last Scan: \nPort Scan: {port_status}, Host Scan: {host_status}, OS Scan: {os_status}")
+    print(f"Results Available: \nPort Scan: {port_result_status}, Host Scan: {host_result_status}, OS Scan: {os_results_status}")
+
 # Function to display main menu and options
 def main_menu():
-    global last_port_scan, last_host_scan, last_os_scan
     print('''
   ______                              ______       _             
  / _____)             _              (_____ \     | |            
@@ -129,9 +141,7 @@ def main_menu():
 (______/|_____)_| |_| \__)_|    \__  |_|    |____/ \_|___/|_____)
                                (____/                                    
 ''')
-    print(f'''Last Port Scan at: {last_port_scan}
-Last Host Scan at: {last_host_scan}
-Last OS Scan at: {last_os_scan}''')
+    scan_status()
     print('''\nWelcome to SentryPulse!
     1: Port Scanner
     2: Host Discovery Scan
