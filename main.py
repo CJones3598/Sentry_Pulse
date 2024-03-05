@@ -36,6 +36,7 @@ def get_integer_input(prompt):
         # If value not integer, return an error and prompt input
         except ValueError:
             print("Invalid Input")
+            logging.error("Error: %s", ValueError)
 
 # Function to validate port input
 def get_port(prompt):
@@ -50,6 +51,7 @@ def get_port(prompt):
                 print("Port must be between 1 and 65535")
         except ValueError:
             print("Invalid Input")
+            logging.error("Error: %s", ValueError)
 
 # Function to validate port range input
 def validate_port_range():
@@ -78,8 +80,9 @@ def get_network(prompt):
             # If successful, return the address
             return network_address
         except ValueError:
-            # IError handling for invalid user input
+            # Error handling for invalid user input
             print("Invalid Network Address.")
+            logging.error("Error: %s", ValueError)
 
 # Function to get IP input from the user
 def get_ip_input(prompt):
@@ -117,8 +120,10 @@ def get_ip_input(prompt):
         # Error handling for values adn exceptions
         except ValueError as e:
             print("Error:", e)
+            logging.error("Error: %s", e)
         except Exception as e:
             print("Error:", e)
+            logging.error("Error: %s", e)
 
 
 # Function to log user interaction with application
@@ -231,6 +236,7 @@ def port_scanner(target, port_range, scan_type=1):
     # Error Handling for exceptions occurred during port scanning
     except Exception as e:
         print(f"An error occurred: {e}")
+        logging.error("Error: %s", e)
         return
 
     # Display scan results or error if no results obtained
@@ -281,10 +287,12 @@ def host_discovery(network):
     # Error handling for NMAP errors 
     except nmap.PortScannerError as e:
         print(f"Error while scanning network: {e}")
+        logging.error("Error: %s", e)
         return []
     # Error handling for other errors not captured
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        logging.error("Error: %s", e)
         return []
     
     # Display scan results or error if no results obtained
@@ -349,10 +357,12 @@ def os_discovery(target):
     # Error handling for NMAP errors 
     except nmap.PortScannerError as e:
         print(f"Error while scanning: {e}")
+        logging.error("Error: %s", e)
         return []
     # Error handling for other errors not captured
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        logging.error("Error: %s", e)
         return []
 
     # Display scan results or error if no results obtained
