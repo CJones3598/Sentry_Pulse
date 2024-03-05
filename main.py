@@ -116,6 +116,14 @@ def get_ip_input(prompt):
         except Exception as e:
             print("Error:", e)
 
+def reset_scans():
+    # Global variables for scan results and scan times
+    global port_results, host_results, os_results
+    global last_port_scan, last_host_scan, last_os_scan
+    # Set scan result variables to None
+    port_results = host_results = os_results = None
+    # Set last scan time variables to none
+    last_port_scan = last_host_scan = last_os_scan = None
 
 # Function to check status of each of the scan types
 def scan_status():
@@ -346,7 +354,10 @@ def create_report():
         report_file.write("\nOS Discovery Results:\n")
         report_file.write(f"OS Scan Completed at: {last_os_scan}\n")
         report_file.write(formatted_os)
-
+    print(f"Report Created: {file_name}-{date}.txt")
+    print("Previous Results Cleared.")
+    reset_scans()
+    
 
 if __name__ == '__main__':
     while True:
