@@ -11,11 +11,15 @@ from datetime import datetime
 # Import ipaddresss module for input validation
 import ipaddress
 
+
 # Global Variables for times and results
 port_results = None    # Port scan results
 last_port_scan = None  # Last port scan time
 host_results = None    # Host scan results
 last_host_scan = None  # Last host scan time
+os_results = None      # OS Scan Results
+last_os_scan = None    # Last OS Scan time
+
 
 ### Functions for Input Validation ###
 # Function to validate integer inputs
@@ -73,11 +77,49 @@ def get_network(prompt):
             # IError handling for invalid user input
             print("Invalid Network Address.")
 
+# Function to get IP input from the user
+def get_ip_input(prompt):
+    while True:
+        try:
+            # Prompt user input for network address
+            network = input(prompt)
+            if '-' not in network:
+                # Create an IPv4 network object from the input
+                ipaddress.IPv4Network(network)
+                # If successful, return the address
+                return network
+            elif '-' in network:
+                # Split the input by '-' to get start and end addresses
+                parts = network.split('-')
+                # Check if there are 2 parts to the network address
+                if len(parts) == 2:
+                    # Define start and end and split further
+                    start, end = parts
+                    start_parts = start.split('.')
+                    # Ensure start part of address contains 4 sections
+                    if len(start_parts) == 4:
+                        # Check each part of the start address is a valid number and has a maximum of 3 digits
+                        if all(part.isdigit() and len(part) <= 3 for part in start_parts):
+                            # Check each part of the start address is within the valid range (0-255)
+                            if all(0 <= int(part) <= 255 for part in start_parts):
+                                # Check the end part is a valid number and has a maximum of 3 digits
+                                if end.isdigit() and 0 <= int(end) <= 255 and len(end) <= 3:
+                                    # Ensure the fourth part of the start address is less than or equal to the end part
+                                    if int(start_parts[3]) <= int(end):
+                                        # If conditions are met, return  network address
+                                        return network
+            # If no conditions are met, raise a Error
+            raise ValueError("Invalid input.")
+        # Error handling for values adn exceptions
+        except ValueError as e:
+            print("Error:", e)
+        except Exception as e:
+            print("Error:", e)
+
 
 # Function to display main menu and options
 def main_menu():
-    global last_port_scan
-    global last_host_scan
+    global last_port_scan, last_host_scan, last_os_scan
     print('''
   ______                              ______       _             
  / _____)             _              (_____ \     | |            
@@ -87,10 +129,13 @@ def main_menu():
 (______/|_____)_| |_| \__)_|    \__  |_|    |____/ \_|___/|_____)
                                (____/                                    
 ''')
-    print("Last Port Scan at: ", last_port_scan, "\nLast Host Scan at: ", last_host_scan)
+    print(f'''Last Port Scan at: {last_port_scan}
+Last Host Scan at: {last_host_scan}
+Last OS Scan at: {last_os_scan}''')
     print('''\nWelcome to SentryPulse!
     1: Port Scanner
     2: Host Discovery Scan
+    3: OS Discovery Scan
     0: Exit Program
         ''')
 
@@ -201,6 +246,65 @@ def host_discovery(network):
     else:
         print("No hosts found.")
 
+# Function to scan hosts for OS information
+def os_discovery(target):
+
+    # Global variables to store results and scan time
+    global os_results       # OS Scan Results
+    global last_os_scan     # Last OS Scan Time
+
+    try:
+        # Set last host discovery scan time
+        last_os_scan = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # Display scan start time
+        print("Scan Started at:", last_os_scan)
+        # Create an instance of PortScanner from NMAP library
+        scanner = nmap.PortScanner()
+        # Perform OS discovery scan
+        scanner.scan(hosts=target, arguments='-O')
+        
+        # Create an empty list to store results
+        results = []
+        # Function to process scanning for a single host
+        def process_host(host):
+            # Access and modify the results list defined outside function
+            nonlocal results
+            # Extracting OS information for the current host from the scanner
+            os_match = scanner[host]['osmatch']
+            # Checking if OS information is available
+            if os_match:
+                # If OS information is available, iterate through each OS info
+                for os_info in os_match:
+                    # Add results to list
+                    results.append([host, os_info['name'], os_info['accuracy']])
+            else:
+                # If no OS information found, add message indicating to the results list
+                results.append([host, "No OS information found", "N/A"])
+
+        # Use ThreadPoolExecutor to scan hosts concurrently
+        with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
+            # Submit tasks for each host
+            futures = [executor.submit(process_host, host) for host in scanner.all_hosts()]
+            # Wait for all tasks to complete
+            concurrent.futures.wait(futures)
+            
+    # Error handling for NMAP errors 
+    except nmap.PortScannerError as e:
+        print(f"Error while scanning: {e}")
+        return []
+    # Error handling for other errors not captured
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return []
+
+    # Display scan results or error if no results obtained
+    if results:
+        print(tabulate(results, headers=["IP Address", "Operating System", "Match %"], tablefmt="grid"))
+        os_results = results
+    else:
+        print("No results to display")
+
+
 if __name__ == '__main__':
     while True:
         # Dislay Main Menu and option input
@@ -221,6 +325,10 @@ if __name__ == '__main__':
             # Host Discovery Function
             network = get_network("Enter Target Network(e.g. 10.10.10.0/24): ")
             host_discovery(network)  
+        elif menu_option == 3:
+            # OS Discovery Function
+            target = get_ip_input("Enter target IP address(e.g.'10.10.1.1','10.10.1.1-10'or'10.10.1.0/24'): ")
+            os_discovery(target)
         else:
             # Error handling for invalid option input
             print("Invalid Option")
