@@ -1,4 +1,4 @@
-# Import NMAP Module
+# Import NMAP Module for core port scanner functions
 import nmap
 # Import Concurret.futures module - Used to scan multiple ports at same time
 import concurrent.futures
@@ -12,6 +12,8 @@ from datetime import datetime
 import ipaddress
 # Import logging module for user interaction logging
 import logging
+# Import OS module for clearing terminal
+import os
 
 
 # Global Variables for times and results
@@ -34,9 +36,9 @@ def get_integer_input(prompt):
             user_input = int(input(prompt))
             return user_input
         # If value not integer, return an error and prompt input
-        except ValueError:
-            print("Invalid Input")
-            logging.error("Error: %s", ValueError)
+        except ValueError as e:
+            print("Error: ", e )
+            logging.error("Error: %s", e)
 
 # Function to validate port input
 def get_port(prompt):
@@ -49,9 +51,9 @@ def get_port(prompt):
                 return port_input
             else:
                 print("Port must be between 1 and 65535")
-        except ValueError:
-            print("Invalid Input")
-            logging.error("Error: %s", ValueError)
+        except ValueError as e:
+            print("Error: ", e )
+            logging.error("Error: %s", e)
 
 # Function to validate port range input
 def validate_port_range():
@@ -79,10 +81,10 @@ def get_network(prompt):
             ipaddress.IPv4Network(network_address)
             # If successful, return the address
             return network_address
-        except ValueError:
+        except ValueError as e:
             # Error handling for invalid user input
-            print("Invalid Network Address.")
-            logging.error("Error: %s", ValueError)
+            print("Error: ", e )
+            logging.error("Error: %s", e)
 
 # Function to get IP input from the user
 def get_ip_input(prompt):
@@ -126,6 +128,16 @@ def get_ip_input(prompt):
             logging.error("Error: %s", e)
 
 
+### Utility Functions ###
+# Function to clear previous terminal display
+def clear_screen():
+    # Clear screen command for Windows
+    if os.name == 'nt':
+        os.system('cls')
+    # Clear screen command for Linux and macOS
+    else:
+        os.system('clear')
+
 # Function to log user interaction with application
 def log_interaction(user, action):
     # Check if the action is a list or tuple
@@ -163,6 +175,8 @@ def scan_status():
     print(f"Last Scan: \nPort Scan: {port_status}, Host Scan: {host_status}, OS Scan: {os_status}")
     print(f"Results Available: \nPort Scan: {port_result_status}, Host Scan: {host_result_status}, OS Scan: {os_results_status}")
 
+
+### Core Application Functions ###
 # Function to display main menu and options
 def main_menu():
     print('''
@@ -246,11 +260,20 @@ def port_scanner(target, port_range, scan_type=1):
         # Log the interaction with the action
         log_interaction("USER", f"Finished Port Scan. Target: {target}, Ports: {port_range}, Scan Type: {scan_type}")
         log_interaction("SYSTEM", f"Results Stored for Port Scan on: {target} Ports: {port_range}" )
+        # Prompt user for input to exit to main menu
+        while True:
+            exit_choice = input("Enter 'exit' to return to main menu: ")
+            if exit_choice.lower() == 'exit':
+                break
+            else:
+                print('Invalid Input')
     else:
         print("No results to display.")
         # Log the interaction with the action
         log_interaction("USER", f"Finished Port Scan. Target: {target}, Ports: {port_range}, Scan Type: {scan_type}")
         log_interaction("SYSTEM", f"No Results Found for Port Scan on: {target} Ports: {port_range}" )
+        # Pause before returning to main menu
+        time.sleep(3)
 
 # Function to scan for hosts on target netwrok
 def host_discovery(network):
@@ -303,11 +326,20 @@ def host_discovery(network):
         # Log the interaction with the action
         log_interaction("USER", f"Finished Host Discovery on: {network}")
         log_interaction("SYSTEM", f"Results Stored for Host Discovery on: {network}" )
+        # Prompt user for input to return to main menu
+        while True:
+            exit_choice = input("Enter 'exit' to return to main menu: ")
+            if exit_choice.lower() == 'exit':
+                break
+            else:
+                print('Invalid Input')
     else:
         print("No hosts found.")
         # Log the interaction with the action
         log_interaction("USER", f"Finished Host Discovery on: {network}")
         log_interaction("SYSTEM", f"No Results Found for Host Discovery on: {network}" )
+        # Pause before returning to main menu
+        time.sleep(3)
 
 # Function to scan hosts for OS information
 def os_discovery(target):
@@ -372,11 +404,20 @@ def os_discovery(target):
         # Log the interaction with the action
         log_interaction("USER", f"Finished OS Discovery on: {target}")
         log_interaction("SYSTEM", f"Results Stored for OS Discovery on: {target}" )
+        # Prompt user for input to return to main menu
+        while True:
+            exit_choice = input("Enter 'exit' to return to main menu: ")
+            if exit_choice.lower() == 'exit':
+                break
+            else:
+                print('Invalid Input')
     else:
         print("No results to display")
         # Log the interaction with the action
         log_interaction("USER", f"Finished OS Discovery on: {target}")
         log_interaction("SYSTEM", f"No Results Found for OS Discovery on: {target}" )
+        # Pause before returning to main menu
+        time.sleep(3)
 
 # Function to create a report for scan results
 def create_report():
@@ -400,7 +441,7 @@ def create_report():
         report_file.write(f"Report Title: {title}\n")
         report_file.write(f"Date: {date}\n\n")
         
-        report_file.write("\nPort Scan Results:")
+        report_file.write("\nPort Scan Results:\n")
         report_file.write(f"Port Scan Completed at: {last_port_scan}\n")
         report_file.write(formatted_ports)
         report_file.write("\nHost Discovery Results:\n")
@@ -414,10 +455,13 @@ def create_report():
     print(f"Report Created: {file_name}-{date}.txt")
     print("Previous Results Cleared.")
     reset_scans()
+    # Pause before returning to main menu
+    time.sleep(3)
 
 if __name__ == '__main__':
     log_interaction("System", "Application Loaded")
     while True:
+        clear_screen()
         # Dislay Main Menu and option input
         main_menu()
         # Log the interaction with the action
@@ -432,6 +476,7 @@ if __name__ == '__main__':
             exit()
         elif menu_option == 1:
             ## Port Scanner Function ##
+            clear_screen()
             # Log the interaction with the action
             log_interaction("USER", "Selected Port Scanner Function")
             target = input("Enter target IP address or hostname: ")
@@ -440,18 +485,21 @@ if __name__ == '__main__':
             port_scanner(target, port_range, scan_type)
         elif menu_option == 2:
             ## Host Discovery Function ##
+            clear_screen()
             # Log the interaction with the action
             log_interaction("USER", "Selected Host Discovery Function")
             network = get_network("Enter Target Network(e.g. 10.10.10.0/24): ")
             host_discovery(network)  
         elif menu_option == 3:
             ## OS Discovery Function ##
+            clear_screen()
             # Log the interaction with the action
             log_interaction("USER", "Selected OS Discovery Function")
             target = get_ip_input("Enter target IP address(e.g.'10.10.1.1','10.10.1.1-10'or'10.10.1.0/24'): ")
             os_discovery(target)
         elif menu_option == 4:
             ## Create Report Function ##
+            clear_screen()
             # Log the interaction with the action
             log_interaction("USER", "Selected Report Creation Function")
             # Check if all results are available
@@ -476,3 +524,4 @@ if __name__ == '__main__':
         else:
             # Error handling for invalid option input
             print("Invalid Option")
+            time.sleep(3)
