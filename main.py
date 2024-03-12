@@ -440,16 +440,18 @@ def create_report():
     with open(f"{file_name}-{date}.txt", "w") as report_file:
         report_file.write(f"Report Title: {title}\n")
         report_file.write(f"Date: {date}\n\n")
-        
-        report_file.write("\nPort Scan Results:\n")
-        report_file.write(f"Port Scan Completed at: {last_port_scan}\n")
-        report_file.write(formatted_ports)
-        report_file.write("\nHost Discovery Results:\n")
-        report_file.write(f"Host Scan Completed at: {last_host_scan}\n")
-        report_file.write(formatted_hosts)
-        report_file.write("\nOS Discovery Results:\n")
-        report_file.write(f"OS Scan Completed at: {last_os_scan}\n")
-        report_file.write(formatted_os)
+        if port_results is not None:
+            report_file.write("\nPort Scan Results:\n")
+            report_file.write(f"Port Scan Completed at: {last_port_scan}\n")
+            report_file.write(formatted_ports)
+        if host_results is not None:
+            report_file.write("\nHost Discovery Results:\n")
+            report_file.write(f"Host Scan Completed at: {last_host_scan}\n")
+            report_file.write(formatted_hosts)
+        if os_results is not None:
+            report_file.write("\nOS Discovery Results:\n")
+            report_file.write(f"OS Scan Completed at: {last_os_scan}\n")
+            report_file.write(formatted_os)
     # Log the interaction with the action
     log_interaction("USER", f"Created Report: {file_name}-{date}.txt ")
     print(f"Report Created: {file_name}-{date}.txt")
